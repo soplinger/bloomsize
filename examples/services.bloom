@@ -1,0 +1,22 @@
+# Bloom filters guarding a small web service.
+#
+# NAME key=value ...
+#   n=        items the filter will hold (required)
+#   p=        target false-positive rate  \
+#   m=        exact bit count              } give exactly one
+#   bpi=      bits per item               /
+#   k=        hash count override (optional)
+#   counter=  bits per counting cell (optional, enables overflow analysis)
+#
+# gate NAME METRIC OP VALUE    METRIC: fpr, bytes, overflow   OP: <= or >=
+
+seen_urls      n=2000000  p=0.001
+blocklist      n=150000   bpi=12
+session_ids    n=500000   m=4000000 k=5
+recent_writes  n=80000    p=0.01 counter=4
+
+# Whole-number k can nudge the FPR a little above p, so the gates leave some headroom.
+gate seen_urls      fpr <= 0.0011
+gate blocklist      fpr <= 0.004
+gate session_ids    bytes <= 600000
+gate recent_writes  overflow <= 1e-6
